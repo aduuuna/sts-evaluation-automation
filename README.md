@@ -58,8 +58,8 @@ The automation is **partially supervised**, meaning you still get to review and 
 2. **Create a `.env` file** in your project root:
 
    ```env
-   STS_USERNAME=your_username
-   STS_PASSWORD=your_password
+   STS_USERNAME=your_student_id
+   STS_PASSWORD=your_student_password
    ```
 
 3. **Run the automation**
