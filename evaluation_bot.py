@@ -71,14 +71,14 @@ def run_evaluation(keep_browser_open=False, debug=False):
             except Exception as e:
                 if debug: print("Lecturer dropdown handling error:", e)
 
-            # Fill radio Q1..Q21 with value = 1 (Strongly Disagree)
+            # Fill radio Q1..Q21 with value = 3 (Neutral)
             for qnum in range(1, 22):
-                xpath = f"//input[@name='Q{qnum}' and @value='1']"
+                xpath = f"//input[@name='Q{qnum}' and @value='3']"
                 try:
                     rb = driver.find_element(By.XPATH, xpath)
                     driver.execute_script("arguments[0].click();", rb)
                 except Exception:
-                    print(f"  Q{qnum}: radio with value=1 not found (skipped)")
+                    print(f"  Q{qnum}: radio with value=3 not found (skipped)")
 
             # Fill textareas optional (you can change/remove)
             try:
