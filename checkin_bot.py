@@ -1,5 +1,3 @@
-# checkin_bot.py
-# Automatically clicks "Check In to Exam" buttons until none left.
 import time
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -24,7 +22,7 @@ def run_checkin():
             # filter visible & enabled
             candidates = [e for e in checkin_elems if e.is_displayed() and e.is_enabled()]
             if not candidates:
-                print("✅ No more check-in buttons found. All done.")
+                print("No more check-in buttons found. All done.")
                 break
 
             print(f"Try #{attempt}: found {len(candidates)} check-in button(s). Clicking them...")

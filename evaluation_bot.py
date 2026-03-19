@@ -1,5 +1,3 @@
-# evaluation_bot.py
-# Usage: import run_evaluation from this file, or run as script
 import time
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -27,7 +25,7 @@ def run_evaluation(keep_browser_open=False, debug=False):
         while True:
             evaluate_links = driver.find_elements(By.XPATH, "//a[contains(., 'Evaluate Course')]")
             if not evaluate_links:
-                print("✅ No more 'Evaluate Course' links found. Done with evaluations.")
+                print("No more 'Evaluate Course' links found. Done with evaluations.")
                 break
 
             # Click the first evaluate link
@@ -44,35 +42,37 @@ def run_evaluation(keep_browser_open=False, debug=False):
                 continue
             time.sleep(0.4)
 
-            # Lecturer dropdown handling
+           
+            # NEW Lecturer card/image selection handling
             try:
-                select_elem = driver.find_element(By.CSS_SELECTOR, "select[name='lect_name']")
-                options = select_elem.find_elements(By.TAG_NAME, "option")
-                real_opts = [opt for opt in options if opt.get_attribute("value") and opt.get_attribute("value").strip() != ""]
-                if len(real_opts) == 0:
-                    print("No lecturer options found (empty).")
-                elif len(real_opts) == 1:
-                    val = real_opts[0].get_attribute("value")
-                    driver.execute_script("arguments[0].value = arguments[1]; arguments[0].dispatchEvent(new Event('change'));", select_elem, val)
-                    print("Selected lecturer:", real_opts[0].text)
+                # Find all profile cards
+                cards = driver.find_elements(By.CSS_SELECTOR, ".profile-card")
+                real_cards = [c for c in cards if c.get_attribute("data-user-id") and c.get_attribute("data-user-id").strip()]
+                
+                if len(real_cards) == 0:
+                    print("No lecturer cards found.")
+                elif len(real_cards) == 1:
+                    safe_click_js(driver, real_cards[0])
+                    print("Selected lecturer:", real_cards[0].get_attribute("data-user-id").split("^^")[-1])
                 else:
                     print("Multiple lecturers detected:")
-                    for i, opt in enumerate(real_opts, start=1):
-                        print(f"  {i}. {opt.text}")
+                    for i, card in enumerate(real_cards, start=1):
+                        name = card.get_attribute("data-user-id").split("^^")[-1]
+                        print(f"  {i}. {name}")
                     choice = input("Enter number of the lecturer to select (press Enter for 1): ").strip()
                     try:
                         idx = int(choice) - 1 if choice else 0
-                        idx = max(0, min(idx, len(real_opts)-1))
+                        idx = max(0, min(idx, len(real_cards) - 1))
                     except Exception:
                         idx = 0
-                    val = real_opts[idx].get_attribute("value")
-                    driver.execute_script("arguments[0].value = arguments[1]; arguments[0].dispatchEvent(new Event('change'));", select_elem, val)
-                    print("Selected lecturer:", real_opts[idx].text)
+                    safe_click_js(driver, real_cards[idx])
+                    print("Selected lecturer:", real_cards[idx].get_attribute("data-user-id").split("^^")[-1])
             except Exception as e:
-                if debug: print("Lecturer dropdown handling error:", e)
+                if debug: print("Lecturer card selection error:", e)
 
             # Fill radio Q1..Q21 with value = 3 (Neutral)
-            for qnum in range(1, 22):
+            # Replace the range(1,22) loop with just the actual question numbers
+            for qnum in [1,2,3,4,5,6,7,8,9,12,13,14,15,16,17,18,19,20,21]:
                 xpath = f"//input[@name='Q{qnum}' and @value='3']"
                 try:
                     rb = driver.find_element(By.XPATH, xpath)
