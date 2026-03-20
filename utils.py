@@ -17,15 +17,25 @@ def setup_browser():
     opts = webdriver.ChromeOptions()
     if HEADLESS:
         opts.add_argument("--headless=new")
+        opts.add_argument("--no-sandbox")
+        opts.add_argument("--disable-dev-shm-usage")
         opts.add_argument("--disable-gpu")
     opts.add_argument("--start-maximized")
+    # Add more options for server environments
+    opts.add_argument("--disable-blink-features=AutomationControlled")
     service = Service(CHROMEDRIVER_PATH) if CHROMEDRIVER_PATH else Service()
     driver = webdriver.Chrome(service=service, options=opts)
     driver.implicitly_wait(3)
     return driver
 
-def login(driver):
-    """Log in as student (selects 'Student' radio robustly)."""
+def login(driver, username=None, password=None):
+    """Log in as student using provided or environment credentials."""
+    user = username or STS_USERNAME
+    pw = password or STS_PASSWORD
+    
+    if not user or not pw:
+        raise ValueError("No credentials provided for login")
+
     wait = WebDriverWait(driver, 15)
     driver.get("https://sts.ug.edu.gh/services/login")
     wait.until(EC.presence_of_element_located((By.ID, "studentid")))
@@ -43,9 +53,9 @@ def login(driver):
 
     # Fill credentials and submit
     driver.find_element(By.ID, "studentid").clear()
-    driver.find_element(By.ID, "studentid").send_keys(STS_USERNAME)
+    driver.find_element(By.ID, "studentid").send_keys(user)
     driver.find_element(By.ID, "pin").clear()
-    driver.find_element(By.ID, "pin").send_keys(STS_PASSWORD)
+    driver.find_element(By.ID, "pin").send_keys(pw)
     driver.find_element(By.XPATH, "//button[@type='submit']").click()
 
     # Wait small moment for dashboard

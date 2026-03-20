@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>STS Evaluation & Check-In Bot</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="bg-overlay"></div>
+    
+    <div class="container">
+        <header>
+            <div class="logo">
+                <img src="/static/logo.png" alt="University of Ghana Logo" class="logo-img">
+                <div class="logo-text">
+                    <h1>STS<span>Automation</span></h1>
+                    <p class="tagline">Official Student Portal Bot</p>
+                </div>
+            </div>
+            <div class="status-badge" id="bot-status-badge">Idle</div>
+        </header>
+
+        <section class="settings card glass">
+            <div class="card-header">
+                <h3><span class="card-icon" style="font-size: 1.2rem; margin:0">🔑</span> Credential Settings</h3>
+            </div>
+            <div class="settings-grid">
+                <div class="input-group">
+                    <label for="sts-username">Student ID</label>
+                    <input type="text" id="sts-username" placeholder="e.g. 10987654">
+                </div>
+                <div class="input-group">
+                    <label for="sts-password">STS PIN</label>
+                    <input type="password" id="sts-password" placeholder="••••">
+                </div>
+            </div>
+            <p class="settings-note">Note: Credentials are only used for the current session and are not stored permanently.</p>
+        </section>
+
+        <main>
+            <div class="dashboard-grid">
+                <!-- Action Cards -->
+                <div class="card glass">
+                    <div class="card-icon">📚</div>
+                    <h3>Course Evaluation</h3>
+                    <p>Automate the evaluation process for all your courses. The bot handles form filling and lecturer selection.</p>
+                    <button id="btn-evaluation" class="btn btn-primary">Start Evaluation</button>
+                </div>
+
+                <div class="card glass">
+                    <div class="card-icon">✅</div>
+                    <h3>Exam Check-In</h3>
+                    <p>Automatically perform the mandatory check-in for all eligible examination courses.</p>
+                    <button id="btn-checkin" class="btn btn-secondary">Start Check-In</button>
+                </div>
+
+                <!-- Logs Section -->
+                <div class="card glass wide-card">
+                    <div class="card-header">
+                        <h3>Live Automation Logs</h3>
+                        <button id="btn-clear-logs" class="btn btn-small">Clear</button>
+                    </div>
+                    <div class="log-container" id="log-container">
+                        <div class="log-entry system">Welcome to STS Automation Dashboard.</div>
+                        <div class="log-entry info">Provide credentials above and click an action to begin.</div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            <p>&copy; 2026 STS Automation Bot. Effortless Academic Management.</p>
+        </footer>
+    </div>
+    <script src="/static/script.js"></script>
+</body>
+</html>

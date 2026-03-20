@@ -9,7 +9,7 @@ def safe_click_js(driver, elem):
     driver.execute_script("arguments[0].scrollIntoView({block:'center'});", elem)
     driver.execute_script("arguments[0].click();", elem)
 
-def run_evaluation(keep_browser_open=False, debug=False):
+def run_evaluation(username=None, password=None, keep_browser_open=False, debug=False, logger=print):
     """
     Returns True if evaluation process completed (no more Evaluate links),
     False on error.
@@ -18,26 +18,27 @@ def run_evaluation(keep_browser_open=False, debug=False):
     driver = setup_browser()
     wait = WebDriverWait(driver, 15)
     try:
-        login(driver)
+        login(driver, username=username, password=password)
         driver.get("https://sts.ug.edu.gh/services/evaluation")
         time.sleep(1)
 
         while True:
             evaluate_links = driver.find_elements(By.XPATH, "//a[contains(., 'Evaluate Course')]")
             if not evaluate_links:
-                print("No more 'Evaluate Course' links found. Done with evaluations.")
+                logger("No more 'Evaluate Course' links found. Done with evaluations.")
                 break
 
             # Click the first evaluate link
             link = evaluate_links[0]
-            print("Opening:", (link.text or link.get_attribute("href"))[:80])
+            link_text = (link.text or link.get_attribute("href"))[:80]
+            logger(f"Opening: {link_text}")
             safe_click_js(driver, link)
 
             # Wait for the form to load (coursecode field present)
             try:
                 wait.until(EC.presence_of_element_located((By.NAME, "coursecode")))
             except TimeoutException:
-                print("Form did not load in time; trying to continue...")
+                logger("Form did not load in time; trying to continue...")
                 driver.get("https://sts.ug.edu.gh/services/evaluation")
                 continue
             time.sleep(0.4)
@@ -50,37 +51,28 @@ def run_evaluation(keep_browser_open=False, debug=False):
                 real_cards = [c for c in cards if c.get_attribute("data-user-id") and c.get_attribute("data-user-id").strip()]
                 
                 if len(real_cards) == 0:
-                    print("No lecturer cards found.")
+                    logger("No lecturer cards found.")
                 elif len(real_cards) == 1:
                     safe_click_js(driver, real_cards[0])
-                    print("Selected lecturer:", real_cards[0].get_attribute("data-user-id").split("^^")[-1])
+                    logger(f"Selected lecturer: {real_cards[0].get_attribute('data-user-id').split('^^')[-1]}")
                 else:
-                    print("Multiple lecturers detected:")
-                    for i, card in enumerate(real_cards, start=1):
-                        name = card.get_attribute("data-user-id").split("^^")[-1]
-                        print(f"  {i}. {name}")
-                    choice = input("Enter number of the lecturer to select (press Enter for 1): ").strip()
-                    try:
-                        idx = int(choice) - 1 if choice else 0
-                        idx = max(0, min(idx, len(real_cards) - 1))
-                    except Exception:
-                        idx = 0
-                    safe_click_js(driver, real_cards[idx])
-                    print("Selected lecturer:", real_cards[idx].get_attribute("data-user-id").split("^^")[-1])
+                    logger("Multiple lecturers detected. Auto-selecting the first one.")
+                    # In a real UI, we could pause here, but for now we follow the "automation" goal.
+                    safe_click_js(driver, real_cards[0])
+                    logger(f"Selected lecturer: {real_cards[0].get_attribute('data-user-id').split('^^')[-1]}")
             except Exception as e:
-                if debug: print("Lecturer card selection error:", e)
+                if debug: logger(f"Lecturer card selection error: {e}")
 
             # Fill radio Q1..Q21 with value = 3 (Neutral)
-            # Replace the range(1,22) loop with just the actual question numbers
             for qnum in [1,2,3,4,5,6,7,8,9,12,13,14,15,16,17,18,19,20,21]:
                 xpath = f"//input[@name='Q{qnum}' and @value='3']"
                 try:
                     rb = driver.find_element(By.XPATH, xpath)
                     driver.execute_script("arguments[0].click();", rb)
                 except Exception:
-                    print(f"  Q{qnum}: radio with value=3 not found (skipped)")
+                    logger(f"  Q{qnum}: radio with value=3 not found (skipped)")
 
-            # Fill textareas optional (you can change/remove)
+            # Fill textareas optional
             try:
                 ta1 = driver.find_element(By.NAME, "OQ1")
                 ta2 = driver.find_element(By.NAME, "OQ2")
@@ -89,19 +81,38 @@ def run_evaluation(keep_browser_open=False, debug=False):
             except Exception:
                 pass
 
-            # Pause so user can manually review & click Submit
-            print("\nForm filled for this course.")
-            print("=== REVIEW on the browser and click SUBMIT. After you return to the course list, press ENTER here to continue ===")
-            input()
+            # Automate Submit button click
+            logger("Form filled. Submitting...")
+            try:
+                submit_btn = driver.find_element(By.XPATH, "//button[@type='submit' or contains(., 'Submit')]")
+                safe_click_js(driver, submit_btn)
+                logger("Form submitted.")
+            except Exception as e:
+                logger(f"Could not find or click Submit button: {e}")
+                # Fallback: maybe it's already submitted or we need to wait
+            
+            time.sleep(1) # Wait for redirect
 
-            # After user pressed Enter, wait short time for the evaluation page to reappear
+            # After submit, wait short time for the evaluation page to reappear
             try:
                 wait.until(EC.presence_of_all_elements_located((By.XPATH, "//a[contains(., 'Evaluate Course')]")))
                 time.sleep(0.4)
             except TimeoutException:
-                # No evaluate links detected — assume done
-                print("No evaluate links found after submit (maybe last course).")
-                break
+                # No evaluate links detected — assume done or check if we are on the right page
+                if "evaluation" not in driver.current_url:
+                    driver.get("https://sts.ug.edu.gh/services/evaluation")
+                    time.sleep(1)
+                
+                evaluate_links = driver.find_elements(By.XPATH, "//a[contains(., 'Evaluate Course')]")
+                if not evaluate_links:
+                    logger("No evaluate links found after submit (maybe last course).")
+                    break
+
+        return True
+
+    except Exception as ex:
+        logger(f"Error in evaluation: {ex}")
+        return False
 
         return True
 
