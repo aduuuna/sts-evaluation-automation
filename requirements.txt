@@ -1,2 +1,6 @@
 selenium
 python-dotenv
+fastapi
+uvicorn
+jinja2
+gunicorn

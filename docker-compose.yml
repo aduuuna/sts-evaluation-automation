@@ -1,0 +1,12 @@
+version: '3.8'
+
+services:
+  sts-bot:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - HEADLESS=1
+      # STS_USERNAME and STS_PASSWORD are now provided via UI, 
+      # but environment fallbacks can still be provided here if needed.
+    restart: always
